@@ -28,6 +28,8 @@ Quick start::
 """
 
 from ai_audit.collector import ReceiptCollector, get_current_collector
+from ai_audit.pii import PiiConfig, PiiMode, PiiType, aobfuscate_text, obfuscate_text
+from ai_audit.report import ArticleScore, AuditReport, ComplianceReportGenerator
 from ai_audit.config import AuditConfig
 from ai_audit.dashboard import ComplianceSummary, build_compliance_summary
 from ai_audit.hashing import (
@@ -87,4 +89,14 @@ __all__ = [
     "acanonicalize_input",
     "ahash_output",
     "ahash_state",
+    # PII-Redaction
+    "PiiType",
+    "PiiMode",
+    "PiiConfig",
+    "obfuscate_text",
+    "aobfuscate_text",
+    # EU AI Act Report Generator
+    "ArticleScore",
+    "AuditReport",
+    "ComplianceReportGenerator",
 ]

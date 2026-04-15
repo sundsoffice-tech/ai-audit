@@ -27,6 +27,7 @@ from typing import Any
 
 from ai_audit.hashing import canonicalize_input, hash_output, hash_state
 from ai_audit.models import CheckRecord, DecisionReceipt, ReceiptAction
+from ai_audit.pii import PiiConfig, obfuscate_text
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,7 @@ class ReceiptCollector:
         session_id: str = "",
         tenant_id: str = "",
         model_id: str = "",
+        pii_config: PiiConfig | None = None,
     ) -> None:
         self._receipt = DecisionReceipt(
             trace_id=trace_id,
@@ -69,6 +71,7 @@ class ReceiptCollector:
             model_id=model_id,
         )
         self._checks: list[CheckRecord] = []
+        self._pii_config = pii_config
         self._token = _current_collector.set(self)
 
     # ------------------------------------------------------------------
@@ -76,11 +79,23 @@ class ReceiptCollector:
     # ------------------------------------------------------------------
 
     def set_input(self, text: str) -> None:
-        """Set the canonicalised input hash (NFKC + whitespace + lowercase)."""
+        """Set the canonicalised input hash (NFKC + whitespace + lowercase).
+
+        If a ``pii_config`` was provided at construction, PII is stripped from
+        *text* **before** hashing — ensuring the stored hash never reflects raw
+        personal data (GDPR Art. 17 compliance).
+        """
+        if self._pii_config is not None:
+            text = obfuscate_text(text, self._pii_config)
         self._receipt.input_c14n = canonicalize_input(text)
 
     def set_output(self, text: str) -> None:
-        """Set the output hash (raw SHA-256)."""
+        """Set the output hash (raw SHA-256).
+
+        PII is stripped before hashing when ``pii_config`` is set.
+        """
+        if self._pii_config is not None:
+            text = obfuscate_text(text, self._pii_config)
         self._receipt.output_hash = hash_output(text)
 
     def set_state(self, parts: list[str]) -> None:
