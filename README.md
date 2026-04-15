@@ -168,10 +168,21 @@ For Enterprise, use a KMS-backed `KeyProvider` (see below).
 ### 2. GDPR Art. 17 (Right to Erasure) vs. Append-Only chain
 
 The `ReceiptStore` is an append-only log — deleting a single entry breaks the
-cryptographic chain. **Never store PII in plaintext in receipts.** Apply PII
-scrubbing or field-level encryption (Crypto-Shredding) before calling
-`collector.emit()`. This is a known v0.1.0 limitation; v0.2.0 will add a
-built-in PII scrubbing hook.
+cryptographic chain. Use the built-in PII-Redaction hook so personal data never
+enters the hash (see [PII-Redaction](#pii-redaction-gdpr-art-17) below):
+
+```python
+from ai_audit import PiiConfig, PiiMode, PiiType
+
+collector = ReceiptCollector(
+    tenant_id="acme",
+    pii_config=PiiConfig(
+        enabled_types=frozenset({PiiType.EMAIL, PiiType.IP}),
+        mode=PiiMode.REDACT,
+    ),
+)
+collector.set_input("Contact alice@example.com")  # stored hash: hash("[EMAIL]")
+```
 
 ### 3. High-throughput Redis: use Lua mode
 
@@ -205,6 +216,69 @@ init_key_provider(VaultKeyProvider())
 
 Each tenant gets its own independent hash chain. No cross-tenant metadata
 leakage during audits. Set `tenant_id` in every `ReceiptCollector` call.
+
+## PII-Redaction (GDPR Art. 17)
+
+Strip personal data **before** SHA-256 hashing — the stored hash never reflects
+raw PII, so GDPR Right to Erasure is satisfied without breaking the chain.
+
+```python
+from ai_audit import PiiConfig, PiiMode, PiiType, ReceiptCollector, ReceiptStore
+
+config = PiiConfig(
+    enabled_types=frozenset({PiiType.EMAIL, PiiType.PHONE, PiiType.IP, PiiType.IBAN}),
+    mode=PiiMode.REDACT,   # or HASH (SHA-256 hex) or MASK (a***m)
+)
+
+store = ReceiptStore()
+collector = ReceiptCollector(tenant_id="acme", pii_config=config)
+collector.set_input("Call +49-89-123456 or email bob@corp.com")
+# stored hash = canonicalize_input("Call [PHONE] or email [EMAIL]")
+```
+
+**Supported types:** `EMAIL`, `PHONE`, `IP`, `IBAN`, `CREDIT_CARD`, `CUSTOM` (regex)
+
+**Modes:**
+| Mode | Example output |
+|------|---------------|
+| `REDACT` | `[EMAIL]` |
+| `HASH` | `3d4e5f…` (SHA-256 hex) |
+| `MASK` | `b**@c**.com` |
+
+Zero external dependencies — only `re` and `hashlib`. Async via `aobfuscate_text()`.
+
+## EU AI Act Compliance Reports
+
+Generate tamper-evident compliance reports mapped to EU AI Act Articles 9, 12,
+13, 17, and 18 — fully offline, no internet required.
+
+```python
+from ai_audit import (
+    build_compliance_summary, get_verify_key_hex, verify_chain,
+)
+from ai_audit.report import ComplianceReportGenerator
+
+receipts = store.get_by_tenant("acme")
+chain_result = verify_chain(receipts, get_verify_key_hex())
+summary = build_compliance_summary(receipts, chain_intact=chain_result.valid,
+                                   verify_key_hex=get_verify_key_hex())
+
+gen = ComplianceReportGenerator(summary, verify_key_hex=get_verify_key_hex())
+
+# Choose your format
+print(gen.to_markdown())                          # Git / docs portal
+with open("report.json", "w") as f:
+    f.write(gen.to_json())                        # API / automated pipelines
+with open("report.html", "w") as f:
+    f.write(gen.to_html())                        # Self-contained HTML (air-gap safe)
+```
+
+Each report includes:
+- **Compliance score + statistical confidence** per article (volume-weighted SPRT)
+- **SPRT status** (`CERTIFIED` / `MONITORING` / `FLAGGED`) at the top level
+- **Ed25519 signing-key fingerprint** for non-repudiation
+- **Article-level detail** — Art. 9 Risk Management, Art. 12/18 Record-Keeping,
+  Art. 13 Transparency, Art. 17 Quality Management
 
 ## License
 
