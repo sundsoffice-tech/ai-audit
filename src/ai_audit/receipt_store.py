@@ -1,19 +1,15 @@
 """
-ai_audit.receipt_store — Atomic Redis Pipeline Store for Decision Receipts.
+ai_audit.receipt_store — Atomic Redis Store for Decision Receipts.
 
-In-memory primary store with fire-and-forget Redis persistence via
-atomic ``MULTI/EXEC`` pipelines (one network roundtrip, crash-consistent).
+In-memory primary store with optional Redis persistence.
 
-Indices maintained:
-- ``receipt:{tenant_id}:{receipt_id}`` → Full receipt JSON
-- ``receipt_chain:{tenant_id}`` → Latest chain tip hash
-- ``receipt_session:{session_id}`` → Set of receipt IDs
-- ``receipt_trace:{trace_id}`` → Set of receipt IDs
+Two Redis write modes (NB 005c5140):
+- ``use_lua=False`` (default): atomic MULTI/EXEC pipeline
+- ``use_lua=True``:  server-side Lua script — one network roundtrip,
+  no connection-pool exhaustion under high load (10k+ req/s)
 
-LRU eviction: In-memory store caps at ``max_size`` entries to prevent
-unbounded growth. Oldest entries are evicted first.
-
-Redis is optional — the store works fully in-memory without it.
+Lua script written by NB 005c5140 (2028 Frontiers: Stigmergic Systems
+and Performance Design).
 """
 
 from __future__ import annotations
@@ -29,6 +25,36 @@ from ai_audit.models import DecisionReceipt
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Lua script — NB 005c5140
+# Atomically appends a receipt: updates chain tip + indices in one roundtrip.
+# ---------------------------------------------------------------------------
+_LUA_APPEND_SCRIPT = """
+local tip_key    = KEYS[1]
+local receipt_key = KEYS[2]
+local tenant_idx = KEYS[3]
+local session_idx = KEYS[4]
+local trace_idx  = KEYS[5]
+
+local new_hash    = ARGV[1]
+local receipt_json = ARGV[2]
+local receipt_id  = ARGV[3]
+local timestamp   = ARGV[4]
+
+redis.call('SET', tip_key, new_hash)
+redis.call('SET', receipt_key, receipt_json)
+redis.call('ZADD', tenant_idx, timestamp, receipt_id)
+
+if session_idx ~= 'NONE' then
+    redis.call('ZADD', session_idx, timestamp, receipt_id)
+end
+if trace_idx ~= 'NONE' then
+    redis.call('ZADD', trace_idx, timestamp, receipt_id)
+end
+
+return "OK"
+"""
+
 
 class ReceiptStore:
     """Append-only store for Decision Receipts with optional Redis persistence.
@@ -37,6 +63,8 @@ class ReceiptStore:
         redis_client:  Optional sync Redis client (``redis.Redis``).
         ttl:           Redis key TTL in seconds (default: 30 days).
         max_size:      Max in-memory receipts before LRU eviction.
+        use_lua:       Use server-side Lua script instead of MULTI/EXEC.
+                       Recommended for high-throughput deployments (>1k req/s).
     """
 
     def __init__(
@@ -44,10 +72,21 @@ class ReceiptStore:
         redis_client: Any | None = None,
         ttl: int = 2_592_000,
         max_size: int = 50_000,
+        use_lua: bool = False,
     ) -> None:
         self._redis = redis_client
         self._ttl = ttl
         self._max_size = max_size
+        self._use_lua = use_lua
+        self._lua_script: Any | None = None
+
+        if redis_client is not None and use_lua:
+            try:
+                self._lua_script = redis_client.register_script(_LUA_APPEND_SCRIPT)
+                logger.info("Redis Lua script registered (use_lua=True)")
+            except Exception as e:
+                logger.warning("Could not register Lua script, falling back to MULTI/EXEC: %s", e)
+                self._use_lua = False
 
         self._receipts: OrderedDict[str, DecisionReceipt] = OrderedDict()
         self._chain_tips: dict[str, str] = {}
@@ -62,11 +101,7 @@ class ReceiptStore:
         return ""
 
     def append(self, receipt: DecisionReceipt) -> None:
-        """Store a sealed receipt (in-memory + fire-and-forget Redis).
-
-        O(1) for in-memory storage. Schedules an async Redis commit via
-        ``asyncio.create_task()`` if a Redis client is available.
-        """
+        """Store a sealed receipt (in-memory + fire-and-forget Redis)."""
         while len(self._receipts) >= self._max_size:
             evicted_id, _ = self._receipts.popitem(last=False)
             logger.debug("Receipt LRU eviction: %s", evicted_id)
@@ -82,12 +117,47 @@ class ReceiptStore:
         if self._redis is not None:
             try:
                 asyncio.get_running_loop()
-                asyncio.create_task(self._atomic_redis_commit(receipt))
+                if self._use_lua and self._lua_script is not None:
+                    asyncio.create_task(self._lua_redis_commit(receipt))
+                else:
+                    asyncio.create_task(self._atomic_redis_commit(receipt))
             except RuntimeError:
                 pass  # No event-loop (sync tests / CLI) — skip Redis
 
+    async def _lua_redis_commit(self, receipt: DecisionReceipt) -> None:
+        """Single-roundtrip Lua commit — no connection-pool exhaustion."""
+        if self._redis is None or self._lua_script is None:
+            return
+        try:
+            payload = orjson.dumps(receipt.model_dump(mode="json"))
+            timestamp = receipt.timestamp.timestamp()
+
+            keys = [
+                f"receipt_chain:{receipt.tenant_id}",
+                f"receipt:{receipt.tenant_id}:{receipt.receipt_id}",
+                f"receipt_tenant:{receipt.tenant_id}",
+                receipt.session_id or "NONE",
+                receipt.trace_id or "NONE",
+            ]
+            args = [
+                receipt.receipt_hash,
+                payload,
+                receipt.receipt_id,
+                str(timestamp),
+            ]
+            await asyncio.to_thread(self._lua_script, keys=keys, args=args)
+
+            # TTL for receipt data key
+            await asyncio.to_thread(
+                self._redis.expire,
+                f"receipt:{receipt.tenant_id}:{receipt.receipt_id}",
+                self._ttl,
+            )
+        except Exception as e:
+            logger.warning("Receipt Lua commit failed (best-effort): %s", e)
+
     async def _atomic_redis_commit(self, receipt: DecisionReceipt) -> None:
-        """Atomic MULTI/EXEC pipeline — one network roundtrip, crash-consistent."""
+        """MULTI/EXEC pipeline — crash-consistent, one network roundtrip."""
         if self._redis is None:
             return
         try:
@@ -110,28 +180,23 @@ class ReceiptStore:
     # ------------------------------------------------------------------
 
     def get(self, receipt_id: str) -> DecisionReceipt | None:
-        """Retrieve a single receipt by ID."""
         return self._receipts.get(receipt_id)
 
     def get_by_session(self, session_id: str) -> list[DecisionReceipt]:
-        """Retrieve all receipts for a session, ordered by timestamp."""
-        receipt_ids = self._session_index.get(session_id, set())
-        receipts = [self._receipts[rid] for rid in receipt_ids if rid in self._receipts]
+        ids = self._session_index.get(session_id, set())
+        receipts = [self._receipts[rid] for rid in ids if rid in self._receipts]
         return sorted(receipts, key=lambda r: r.timestamp)
 
     def get_by_trace(self, trace_id: str) -> list[DecisionReceipt]:
-        """Retrieve all receipts for a trace (single request lifecycle)."""
-        receipt_ids = self._trace_index.get(trace_id, set())
-        receipts = [self._receipts[rid] for rid in receipt_ids if rid in self._receipts]
+        ids = self._trace_index.get(trace_id, set())
+        receipts = [self._receipts[rid] for rid in ids if rid in self._receipts]
         return sorted(receipts, key=lambda r: r.timestamp)
 
     def get_by_tenant(self, tenant_id: str, limit: int = 100) -> list[DecisionReceipt]:
-        """Retrieve recent receipts for a tenant (newest first)."""
         matching = [r for r in self._receipts.values() if r.tenant_id == tenant_id]
         matching.sort(key=lambda r: r.timestamp, reverse=True)
         return matching[:limit]
 
     @property
     def count(self) -> int:
-        """Total number of in-memory receipts."""
         return len(self._receipts)

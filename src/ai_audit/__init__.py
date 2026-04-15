@@ -30,8 +30,23 @@ Quick start::
 from ai_audit.collector import ReceiptCollector, get_current_collector
 from ai_audit.config import AuditConfig
 from ai_audit.dashboard import ComplianceSummary, build_compliance_summary
-from ai_audit.hashing import canonicalize_input, hash_output, hash_state
-from ai_audit.keys import get_verify_key_hex, init_audit_config, reset_signing_key
+from ai_audit.hashing import (
+    acanonicalize_input,
+    ahash_output,
+    ahash_state,
+    canonicalize_input,
+    hash_json,
+    hash_output,
+    hash_state,
+)
+from ai_audit.keys import (
+    DefaultKeyProvider,
+    KeyProvider,
+    get_verify_key_hex,
+    init_audit_config,
+    init_key_provider,
+    reset_signing_key,
+)
 from ai_audit.models import CheckRecord, DecisionReceipt, ReceiptAction
 from ai_audit.receipt_store import ReceiptStore
 from ai_audit.verifier import VerificationResult, verify_chain
@@ -59,8 +74,17 @@ __all__ = [
     # Dashboard
     "build_compliance_summary",
     "ComplianceSummary",
-    # Hashing utilities
+    # Key management
+    "KeyProvider",
+    "DefaultKeyProvider",
+    "init_key_provider",
+    # Hashing utilities (sync)
     "canonicalize_input",
     "hash_output",
     "hash_state",
+    "hash_json",
+    # Hashing utilities (async)
+    "acanonicalize_input",
+    "ahash_output",
+    "ahash_state",
 ]

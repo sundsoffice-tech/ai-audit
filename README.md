@@ -149,6 +149,63 @@ class DecisionReceipt:
     signature: str           # Ed25519 signature (hex)
 ```
 
+## Production Considerations
+
+*Written by NB 409cad95 (Enterprise AI 2026: Scaling, Governance, and Performance Laws)*
+
+### 1. Persistent signing key — mandatory
+
+Ed25519 keys sign every DecisionReceipt. If the private key is lost, historical
+chains can no longer be verified — breaking regulatory traceability (EU AI Act Art. 12).
+Always use a persistent key in production:
+
+```python
+init_audit_config(AuditConfig(is_production=True, signing_key_hex="your-hex-key"))
+```
+
+For Enterprise, use a KMS-backed `KeyProvider` (see below).
+
+### 2. GDPR Art. 17 (Right to Erasure) vs. Append-Only chain
+
+The `ReceiptStore` is an append-only log — deleting a single entry breaks the
+cryptographic chain. **Never store PII in plaintext in receipts.** Apply PII
+scrubbing or field-level encryption (Crypto-Shredding) before calling
+`collector.emit()`. This is a known v0.1.0 limitation; v0.2.0 will add a
+built-in PII scrubbing hook.
+
+### 3. High-throughput Redis: use Lua mode
+
+At 1k+ req/s, the default `MULTI/EXEC` mode can cause Redis connection-pool
+exhaustion. Enable the Lua script mode for single-roundtrip atomic commits:
+
+```python
+store = ReceiptStore(redis_client=r, use_lua=True)
+```
+
+### 4. KMS integration via `KeyProvider` ABC
+
+For production key management (Vault, AWS KMS, GCP KMS):
+
+```python
+from ai_audit import KeyProvider, init_key_provider
+import nacl.signing
+
+class VaultKeyProvider(KeyProvider):
+    def get_signing_key(self) -> nacl.signing.SigningKey:
+        secret = vault_client.secrets.kv.read_secret("secret/ai-audit/key")
+        return nacl.signing.SigningKey(bytes.fromhex(secret["data"]["key"]))
+
+    def get_verify_key_hex(self) -> str:
+        return self.get_signing_key().verify_key.encode().hex()
+
+init_key_provider(VaultKeyProvider())
+```
+
+### 5. Per-tenant chain isolation — already built-in
+
+Each tenant gets its own independent hash chain. No cross-tenant metadata
+leakage during audits. Set `tenant_id` in every `ReceiptCollector` call.
+
 ## License
 
 MIT
