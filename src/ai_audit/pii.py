@@ -26,6 +26,7 @@ import hashlib
 import re
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from functools import partial
 from re import Match
 
 
@@ -139,7 +140,7 @@ def obfuscate_text(text: str, config: PiiConfig) -> str:
         pattern = _COMPILED.get(pii_type)
         if pattern:
             result = pattern.sub(
-                lambda m, pt=pii_type: _apply_obfuscation(m, pt, config.mode),
+                partial(_apply_obfuscation, pii_type=pii_type, mode=config.mode),
                 result,
             )
 

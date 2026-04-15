@@ -166,7 +166,8 @@ class ReceiptCollector:
         from ai_audit.keys import get_signing_key
         from ai_audit.receipt_store import ReceiptStore as ReceiptStoreType
 
-        assert isinstance(store, ReceiptStoreType), "store must be a ReceiptStore instance"
+        if not isinstance(store, ReceiptStoreType):
+            raise TypeError(f"store must be a ReceiptStore instance, got {type(store).__name__}")
 
         self._receipt.checks = self._checks
 

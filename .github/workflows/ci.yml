@@ -36,7 +36,6 @@ jobs:
 
       - name: Type check (mypy)
         run: mypy src/ai_audit/ --ignore-missing-imports
-        continue-on-error: true
 
       - name: Tests
         run: pytest tests/ -v --tb=short
