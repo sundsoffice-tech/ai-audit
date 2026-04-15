@@ -10,7 +10,7 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
 authors = [
-    { name = "HACCA", email = "sunds.connect@gmail.com" },
+    { name = "S&S Connect", email = "sunds.connect@gmail.com" },
 ]
 keywords = [
     "audit",
@@ -52,9 +52,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/hacca/ai-audit"
-Repository = "https://github.com/hacca/ai-audit"
-Issues = "https://github.com/hacca/ai-audit/issues"
+Homepage = "https://github.com/sundsoffice-tech/ai-audit"
+Repository = "https://github.com/sundsoffice-tech/ai-audit"
+Issues = "https://github.com/sundsoffice-tech/ai-audit/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ai_audit"]
