@@ -7,11 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-16
+
 ### Added
-- Merkle-Tree Batch Sealing (RFC 6962 compatible)
-- Online/Streaming SPRT for incremental compliance certification
-- Public performance benchmarks (seal latency, verify throughput)
-- This CHANGELOG
+- **Agent Behavioral Contracts** with (p,δ,k)-Satisfaction and Reliability Index Θ
+- **Cryptographic Tool-Call-Receipts** — Ed25519-signed audit trail for every agent API call
+- **Multi-Agent Trace-Graphs (DAG)** — delegation, handoff, parallel orchestration audit
+- CONTRIBUTING.md with Shared Responsibility Model and architecture invariants
+- CI upgraded to mypy --strict
+
+### Security
+- FIX(CRITICAL): ZIP path traversal in verify_evidence_package() (CWE-22)
+- FIX(HIGH): AuditBuffer silent data eviction removed (fail-closed enforced)
+- FIX(HIGH): DEKStore destroy_dek() — documented Python bytes immutability limitation
 
 ## [0.1.2] - 2026-04-16
 
