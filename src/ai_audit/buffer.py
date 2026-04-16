@@ -46,7 +46,7 @@ class AuditBuffer:
 
     def __init__(self, maxsize: int = 50_000) -> None:
         self._maxsize = maxsize
-        self._buffer: deque[DecisionReceipt] = deque(maxlen=maxsize)
+        self._buffer: deque[DecisionReceipt] = deque()
         self._lock = threading.Lock()
         self._total_put: int = 0
         self._total_drained: int = 0

@@ -89,12 +89,15 @@ class AESGCMDEKStore(DEKStore):
         return self._keys.get(dek_id)
 
     def destroy_dek(self, dek_id: str) -> bool:
-        """Securely destroy the DEK by overwriting with zeros before deletion."""
+        """Destroy a DEK by removing it from the store.
+
+        Note: Python's immutable ``bytes`` cannot be reliably zeroed in memory.
+        For production deployments requiring guaranteed key erasure, use a
+        KMS-backed ``DEKStore`` (AWS KMS, GCP KMS, HashiCorp Vault) where
+        key destruction is handled by the HSM hardware.
+        """
         if dek_id not in self._keys:
             return False
-        # Overwrite in memory (best-effort for Python)
-        key = self._keys[dek_id]
-        self._keys[dek_id] = b"\x00" * len(key)
         del self._keys[dek_id]
         return True
 

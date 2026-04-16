@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
@@ -263,6 +264,10 @@ def verify_evidence_package(zip_path: str | Path) -> bool:
     zip_path = Path(zip_path)
     with tempfile.TemporaryDirectory() as tmpdir:
         with zipfile.ZipFile(zip_path) as zf:
+            # Prevent ZIP path traversal (CWE-22)
+            for member in zf.namelist():
+                if os.path.isabs(member) or ".." in member.split("/"):
+                    return False
             zf.extractall(tmpdir)
 
         bundle_dir = Path(tmpdir)

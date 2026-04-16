@@ -93,7 +93,9 @@ We aim to acknowledge reports within 48 hours and provide a fix within 7 days fo
 
 | Version | Supported |
 |---------|-----------|
-| 0.1.x   | Yes       |
+| 0.3.x   | Yes       |
+| 0.2.x   | Yes       |
+| 0.1.x   | Security fixes only |
 
 ## Dependencies
 
@@ -101,3 +103,5 @@ We aim to acknowledge reports within 48 hours and provide a fix within 7 days fo
 - **Pydantic >= 2.0** — receipt schema validation
 - **orjson >= 3.9** — deterministic JSON canonicalization
 - **redis >= 5.0** (optional) — persistent storage backend
+- **cryptography >= 42.0** — AES-256-GCM for crypto-shredding
+- **opentelemetry-api >= 1.20** (optional) — observability metrics
