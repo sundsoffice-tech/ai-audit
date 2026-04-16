@@ -35,6 +35,8 @@ from ai_audit.collector import ReceiptCollector, get_current_collector
 from ai_audit.config import AuditConfig
 from ai_audit.crosswalk import ComplianceCrosswalk, ControlStatus, build_crosswalk, nist_function_map
 from ai_audit.dashboard import ComplianceSummary, build_compliance_summary
+from ai_audit.drift import DriftMonitor, DriftState
+from ai_audit.epochs import EpochManager, EpochSeal
 from ai_audit.export import export_evidence_package, verify_evidence_package
 from ai_audit.hashing import (
     acanonicalize_input,
@@ -125,4 +127,10 @@ __all__ = [
     "ControlStatus",
     "build_crosswalk",
     "nist_function_map",
+    # Epochs
+    "EpochManager",
+    "EpochSeal",
+    # Drift Detection
+    "DriftMonitor",
+    "DriftState",
 ]
