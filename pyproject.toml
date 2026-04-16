@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "ai-audit-trail"
 version = "0.3.1"
-description = "Tamper-evident AI pipeline audit trail — EU AI Act Art. 12 compliant Decision Receipts"
+description = "Cryptographically verifiable audit trail for AI systems — Ed25519 signed, hash-chained Decision Receipts with ISO 42001 / NIST AI RMF compliance mappings"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
@@ -13,6 +13,7 @@ authors = [
     { name = "S&S Connect", email = "sunds.connect@gmail.com" },
 ]
 keywords = [
+    "ai-audit-trail",
     "audit",
     "ai",
     "eu-ai-act",
@@ -21,6 +22,17 @@ keywords = [
     "ed25519",
     "hash-chain",
     "decision-receipt",
+    "tamper-evident",
+    "iso-42001",
+    "nist-ai-rmf",
+    "agent-audit",
+    "tool-call-audit",
+    "ai-governance",
+    "merkle-tree",
+    "gdpr",
+    "crypto-shredding",
+    "provenance",
+    "trace-graph",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

@@ -7,11 +7,26 @@
 [![Tests](https://img.shields.io/badge/tests-196%20passed-brightgreen)](https://github.com/sundsoffice-tech/ai-audit-trail)
 [![mypy](https://img.shields.io/badge/mypy-strict-blue)](https://github.com/sundsoffice-tech/ai-audit-trail)
 
-> **Cryptographically verifiable evidence of conformity for AI systems.**
+**Prove what your AI did, why, and that nobody changed the record.**
+
 > Tamper-evident Decision Receipts with Ed25519 signatures, SHA-256 hash-chains,
-> and formal compliance mappings — no blockchain, no SaaS, no lock-in.
+> and formal compliance mappings. No blockchain, no SaaS, no lock-in.
+> Self-hosted, offline-verifiable, Python-native.
 
 ---
+
+## Why this exists
+
+The **EU AI Act** becomes mandatory for high-risk AI systems in **August 2026**. It requires tamper-evident logs proving every decision was made correctly (Art. 12). Most teams are solving this with normal logging — which is neither tamper-evident nor legally defensible in an audit.
+
+`ai-audit-trail` closes this gap with **cryptographic receipts** that any auditor can verify offline, without accessing your systems. Same principle as a blockchain — without the blockchain overhead, the SaaS dependency, or the vendor lock-in.
+
+## Who is this for
+
+- **Regulated AI teams** (FinTech, HealthTech, LegalTech, InsurTech) who must prove compliance
+- **Enterprise platform teams** deploying LLM agents with tool access
+- **Security and compliance officers** who need audit-ready evidence packages
+- **Developers** who want `pip install` and 3 lines of code, not a platform migration
 
 ## What this library provides
 
@@ -499,4 +514,13 @@ MIT — free for commercial use.
 
 ---
 
-*Built by [S&S Connect](https://github.com/sundsoffice-tech)*
+## Created and maintained by
+
+**[S&S Connect](https://github.com/sundsoffice-tech)** — Building trust infrastructure for autonomous AI systems.
+
+- **Maintainer:** Fabrice ([@sundsoffice-tech](https://github.com/sundsoffice-tech))
+- **Repository:** [github.com/sundsoffice-tech/ai-audit-trail](https://github.com/sundsoffice-tech/ai-audit-trail)
+- **PyPI:** [pypi.org/project/ai-audit-trail](https://pypi.org/project/ai-audit-trail/)
+- **Issues & Feedback:** [GitHub Issues](https://github.com/sundsoffice-tech/ai-audit-trail/issues)
+
+If you use `ai-audit-trail` in production or research, we'd love to hear about it.
