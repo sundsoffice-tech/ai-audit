@@ -30,6 +30,7 @@ Quick start::
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _pkg_version
 
+from ai_audit.batch import BatchSeal, MerkleBatcher, merkle_root, verify_inclusion
 from ai_audit.collector import ReceiptCollector, get_current_collector
 from ai_audit.config import AuditConfig
 from ai_audit.dashboard import ComplianceSummary, build_compliance_summary
@@ -54,6 +55,7 @@ from ai_audit.models import CheckRecord, DecisionReceipt, ReceiptAction
 from ai_audit.pii import PiiConfig, PiiMode, PiiType, aobfuscate_text, obfuscate_text
 from ai_audit.receipt_store import ReceiptStore
 from ai_audit.report import ArticleScore, AuditReport, ComplianceReportGenerator
+from ai_audit.sprt import SPRTMonitor, SPRTState
 from ai_audit.verifier import VerificationResult, verify_chain
 
 try:
@@ -105,4 +107,12 @@ __all__ = [
     "ArticleScore",
     "AuditReport",
     "ComplianceReportGenerator",
+    # Merkle-Tree Batch Sealing
+    "BatchSeal",
+    "MerkleBatcher",
+    "merkle_root",
+    "verify_inclusion",
+    # Online SPRT
+    "SPRTMonitor",
+    "SPRTState",
 ]
