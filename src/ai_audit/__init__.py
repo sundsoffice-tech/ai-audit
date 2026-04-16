@@ -33,7 +33,9 @@ from importlib.metadata import version as _pkg_version
 from ai_audit.batch import BatchSeal, MerkleBatcher, merkle_root, verify_inclusion
 from ai_audit.collector import ReceiptCollector, get_current_collector
 from ai_audit.config import AuditConfig
+from ai_audit.crosswalk import ComplianceCrosswalk, ControlStatus, build_crosswalk, nist_function_map
 from ai_audit.dashboard import ComplianceSummary, build_compliance_summary
+from ai_audit.export import export_evidence_package, verify_evidence_package
 from ai_audit.hashing import (
     acanonicalize_input,
     ahash_output,
@@ -115,4 +117,12 @@ __all__ = [
     # Online SPRT
     "SPRTMonitor",
     "SPRTState",
+    # Evidence Package Export
+    "export_evidence_package",
+    "verify_evidence_package",
+    # Compliance Crosswalk
+    "ComplianceCrosswalk",
+    "ControlStatus",
+    "build_crosswalk",
+    "nist_function_map",
 ]
