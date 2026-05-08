@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.6] - 2026-05-09
+## [0.4.7] - 2026-05-09
+
+### Fixed
+- `server.json` description shortened to fit the MCP Registry's 100-char
+  limit. v0.4.6's registry publish failed with HTTP 422 because the
+  description was 240 chars; the PyPI artefact for 0.4.6 went out fine
+  but the `mcp-registry` job rejected it. v0.4.7 ships the same code
+  with a compliant description so the registry entry actually lands.
+
+### Note on v0.4.6
+v0.4.6 reached PyPI but **not** the MCP Registry due to the description
+length issue above. v0.4.7 is identical except for `server.json` and the
+version bump.
+
+## [0.4.6] - 2026-05-09 — _PyPI only, MCP Registry rejected_
 
 ### Added — Official MCP Registry submission
 - `server.json` at repository root with the `io.github.sundsoffice-tech/ai-audit-trail`
