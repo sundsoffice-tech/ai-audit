@@ -1,0 +1,46 @@
+name: OpenSSF Scorecard
+
+# Runs the OpenSSF Scorecard checks on a schedule and on every push to main.
+# Results are uploaded to the GitHub Security tab AND published publicly so the
+# README badge at https://api.scorecard.dev/projects/github.com/<owner>/<repo>/badge
+# resolves to the current score.
+#
+# Docs: https://github.com/ossf/scorecard-action
+
+on:
+  branch_protection_rule:
+  schedule:
+    # Weekly, Monday 06:00 UTC
+    - cron: "0 6 * * 1"
+  push:
+    branches: [main]
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # upload SARIF to Security tab
+      id-token: write          # publish results so the public badge works
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run Scorecard
+        uses: ossf/scorecard-action@v2.4.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true   # required for the public badge
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
