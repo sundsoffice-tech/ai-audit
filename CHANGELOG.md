@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-16
+
+### Added
+- **Epistemic Integrity / Unforgeable Provenance** (`provenance.py`)
+  - `ProvenanceRecord` with `SourceType` (SYSTEM/USER/DOCUMENT/TOOL/AGENT/MEMORY/UNKNOWN)
+  - `ProvenanceChain` with hash-based integrity verification
+  - `TrustSummary`: avg/min trust, injection detection, system-grounded check
+  - Addresses the "Lethal Trifecta" — proves *where* information came from
+- 7 cross-module integration tests (lifecycle, concurrent emit, SPRT+drift+contract pipeline, Merkle batch, epochs, tool-call+provenance, empty store)
+- Benchmark regression job in GitHub Actions CI
+
+### Security
+- **FIX(CRITICAL) TOCTOU**: `ReceiptStore.atomic_seal_and_append()` with per-tenant
+  `threading.Lock`; `ReceiptCollector.emit()` now uses the atomic path — no more
+  chain forking under concurrent access (4-thread integration test included).
+- **FIX**: `contracts.py` — `_recovery_k` is reset on a new violation (stale
+  recovery-distance bug).
+
+### Quality
+- 196/196 tests passing, ruff clean, mypy strict 0 errors across 26 modules.
+
 ## [0.3.0] - 2026-04-16
 
 ### Added
