@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ai-audit-trail"
-version = "0.4.2"
+version = "0.4.3"
 description = "Cryptographically verifiable audit trail for AI systems — Ed25519 signed, hash-chained Decision Receipts with ISO 42001 / NIST AI RMF compliance mappings"
 readme = "README.md"
 license = { text = "MIT" }
@@ -86,10 +86,14 @@ dev = [
     "mypy>=1.10",
 ]
 
+[project.scripts]
+ai-audit = "ai_audit.__main__:main"
+
 [project.urls]
 Homepage = "https://github.com/sundsoffice-tech/ai-audit-trail"
 Repository = "https://github.com/sundsoffice-tech/ai-audit-trail"
 Issues = "https://github.com/sundsoffice-tech/ai-audit-trail/issues"
+Changelog = "https://github.com/sundsoffice-tech/ai-audit-trail/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ai_audit"]

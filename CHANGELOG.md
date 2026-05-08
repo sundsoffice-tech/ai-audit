@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-05-08
+
+### Added
+- **Console-Script `ai-audit`**: After install, the CLI is callable directly as
+  `ai-audit gen-key`, `ai-audit verify <bundle.zip>`, `ai-audit info`. The
+  `python -m ai_audit ...` form remains supported and unchanged.
+- **`Changelog` URL** in PyPI project metadata (visible on the PyPI sidebar).
+
 ## [0.4.2] - 2026-05-08
 
 ### Added — Compliance metrics (computed properties on ``ComplianceSummary``)
