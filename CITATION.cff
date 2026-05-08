@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use ai-audit-trail in academic, regulatory, or audit-evidence contexts, please cite it as below."
+title: "ai-audit-trail: Cryptographically verifiable audit trails for AI systems"
+abstract: >-
+  ai-audit-trail is a Python library producing tamper-evident, Ed25519-signed
+  and SHA-256 hash-chained Decision Receipts for every decision made by an AI
+  system. It includes built-in compliance mappings to ISO 42001, the NIST AI
+  Risk Management Framework, and EU AI Act articles 9, 12, 13, 17, and 18, as
+  well as drop-in adapters for FastAPI, LangChain, the OpenAI SDK, and the
+  Anthropic SDK. Receipts can be exported as offline-verifiable evidence
+  packages and validated by external auditors without runtime system access.
+type: software
+authors:
+  - name: "S&S Connect"
+    email: sunds.connect@gmail.com
+repository-code: "https://github.com/sundsoffice-tech/ai-audit-trail"
+url: "https://pypi.org/project/ai-audit-trail/"
+license: MIT
+keywords:
+  - ai-governance
+  - ai-audit
+  - ai-compliance
+  - eu-ai-act
+  - iso-42001
+  - nist-ai-rmf
+  - ed25519
+  - hash-chain
+  - tamper-evident
+  - decision-receipts
+  - merkle-tree
+  - mlops
+  - gdpr
+preferred-citation:
+  type: software
+  title: "ai-audit-trail: Cryptographically verifiable audit trails for AI systems"
+  authors:
+    - name: "S&S Connect"
+      email: sunds.connect@gmail.com
+  year: 2026
+  url: "https://github.com/sundsoffice-tech/ai-audit-trail"

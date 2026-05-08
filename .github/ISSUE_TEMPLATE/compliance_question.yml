@@ -1,0 +1,37 @@
+name: Compliance / audit question
+description: Ask about ISO 42001, NIST AI RMF, EU AI Act, GDPR, or a specific control mapping.
+labels: ["compliance"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ai-audit-trail provides **technical building blocks** for compliance.
+        It does not constitute legal advice, certification, or an audit opinion.
+        For binding interpretation, consult a qualified auditor in your
+        jurisdiction. See the Shared Responsibility Model in the README.
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Framework
+      options:
+        - ISO/IEC 42001
+        - NIST AI RMF
+        - EU AI Act
+        - GDPR / Data Protection
+        - SOC 2
+        - HIPAA
+        - PCI DSS
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question or scenario
+    validations:
+      required: true
+  - type: textarea
+    id: control
+    attributes:
+      label: Specific control / article / clause (if any)
+      placeholder: "EU AI Act Art. 12(3), ISO 42001 A.6.2.8, NIST AI RMF MEASURE 2.7, …"

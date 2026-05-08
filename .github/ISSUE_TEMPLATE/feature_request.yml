@@ -1,0 +1,42 @@
+name: Feature request
+description: Suggest an addition that fits the protocol's scope.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please skim the README and CONTRIBUTING.md.
+        ai-audit-trail is intentionally a *universal protocol*: features that
+        couple it to a specific application, RBAC system, or tenant model are
+        out of scope.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Concrete scenario where current API falls short.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API / behaviour
+      description: Sketch the public surface. Even rough is fine.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Where would this live?
+      options:
+        - Core protocol (DecisionReceipt, ReceiptStore, verifier, …)
+        - Integration adapter (FastAPI, LangChain, OpenAI, Anthropic, …)
+        - Storage backend (Postgres, S3, Redis, custom)
+        - KMS provider (Vault, AWS, GCP, Azure, …)
+        - Compliance crosswalk / report
+        - Documentation / examples only
+    validations:
+      required: true

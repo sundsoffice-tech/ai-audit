@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a defect, incorrect behaviour, or unexpected exception.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. The clearer the reproduction
+        steps, the faster the fix.
+  - type: input
+    id: version
+    attributes:
+      label: ai-audit-trail version
+      description: "Output of `ai-audit info` or `python -m ai_audit info`."
+      placeholder: "ai-audit-trail 0.4.3"
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12.10"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: A clear description of the unexpected behaviour.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Smallest possible code snippet that triggers the bug. Please include imports.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Full traceback (if any)
+      render: shell
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true

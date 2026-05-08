@@ -4,8 +4,11 @@
 [![Python](https://img.shields.io/pypi/pyversions/ai-audit-trail.svg)](https://pypi.org/project/ai-audit-trail/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/sundsoffice-tech/ai-audit-trail/actions/workflows/ci.yml/badge.svg)](https://github.com/sundsoffice-tech/ai-audit-trail/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-196%20passed-brightgreen)](https://github.com/sundsoffice-tech/ai-audit-trail)
-[![mypy](https://img.shields.io/badge/mypy-strict-blue)](https://github.com/sundsoffice-tech/ai-audit-trail)
+[![Downloads](https://static.pepy.tech/badge/ai-audit-trail/month)](https://pepy.tech/project/ai-audit-trail)
+[![Tests](https://img.shields.io/badge/tests-234%20passed-brightgreen)](https://github.com/sundsoffice-tech/ai-audit-trail)
+[![mypy](https://img.shields.io/badge/mypy-strict-blue)](http://mypy-lang.org/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/sundsoffice-tech/ai-audit-trail/badge)](https://scorecard.dev/viewer/?uri=github.com/sundsoffice-tech/ai-audit-trail)
 
 **Prove what your AI did, why, and that nobody changed the record.**
 
