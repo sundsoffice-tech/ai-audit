@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-05-08
+
+### Added — Compliance metrics (computed properties on ``ComplianceSummary``)
+- ``action_distribution`` — action counts as fractions (sum to 1.0).
+- ``reject_rate`` — fraction of REJECT + ESCALATE actions (the metric every
+  auditor asks for first).
+- ``allow_rate`` — fraction of ALLOW actions.
+- ``is_certified`` / ``is_flagged`` — ergonomic SPRT-status booleans.
+
+### Changed — `verification_key_id` auto-populated
+- ``build_compliance_summary()`` now queries the active ``KeyProvider`` for the
+  current verify key when no ``verify_key_hex`` is passed, populating
+  ``ComplianceSummary.verification_key_id`` by default. Fails closed (silent
+  empty string) if the provider raises — important for offline analysis tools
+  and KMS-outage scenarios.
+
+### Changed — Ephemeral-key warning throttled
+- The "no signing key configured — using ephemeral Ed25519 key" warning now
+  fires **once per process** instead of on every ``init_audit_config()`` /
+  ``reset_signing_key()`` cycle. Reduces log noise during testing and
+  short-lived workers without weakening the fail-closed contract.
+- The warning's hint now points at the new ``python -m ai_audit gen-key`` CLI
+  instead of the long inline ``python -c "import nacl.signing; ..."`` snippet.
+
+### Quality
+- 239/239 tests passing (+12 new), ruff clean, mypy strict 0 errors.
+- All v0.4.1 features remain unchanged. Pure additive + behaviour-polish release.
+
 ## [0.4.1] - 2026-05-08
 
 ### Fixed

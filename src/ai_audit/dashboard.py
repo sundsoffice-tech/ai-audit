@@ -34,7 +34,14 @@ class ComplianceSummary:
         sprt_status:           ``CERTIFIED`` | ``MONITORING`` | ``FLAGGED``.
         compliance_confidence: Running SPRT confidence (0.0–1.0).
         last_verified_at:      ISO timestamp of last chain verification.
-        verification_key_id:   Hex prefix of the Ed25519 public key.
+        verification_key_id:   16-char hex prefix of the Ed25519 public key.
+
+    Computed properties:
+        action_distribution: Action counts as fractions (sum to 1.0).
+        reject_rate:         REJECT + ESCALATE fraction.
+        allow_rate:          ALLOW fraction.
+        is_certified:        True iff SPRT status is ``CERTIFIED``.
+        is_flagged:          True iff SPRT status is ``FLAGGED``.
     """
 
     total_receipts: int = 0
@@ -47,6 +54,43 @@ class ComplianceSummary:
     compliance_confidence: float = 1.0
     last_verified_at: str = ""
     verification_key_id: str = ""
+
+    @property
+    def action_distribution(self) -> dict[str, float]:
+        """Action counts as fractions of ``total_receipts``. Sums to 1.0
+        (or 0.0 when there are no receipts)."""
+        if self.total_receipts <= 0:
+            return {}
+        return {
+            action: count / self.total_receipts
+            for action, count in self.action_counts.items()
+        }
+
+    @property
+    def reject_rate(self) -> float:
+        """Fraction of receipts whose action was REJECT or ESCALATE."""
+        if self.total_receipts <= 0:
+            return 0.0
+        rejects = self.action_counts.get(ReceiptAction.REJECT.value, 0)
+        rejects += self.action_counts.get(ReceiptAction.ESCALATE.value, 0)
+        return rejects / self.total_receipts
+
+    @property
+    def allow_rate(self) -> float:
+        """Fraction of receipts whose action was ALLOW."""
+        if self.total_receipts <= 0:
+            return 0.0
+        return self.action_counts.get(ReceiptAction.ALLOW.value, 0) / self.total_receipts
+
+    @property
+    def is_certified(self) -> bool:
+        """True iff SPRT status is ``CERTIFIED``."""
+        return self.sprt_status == "CERTIFIED"
+
+    @property
+    def is_flagged(self) -> bool:
+        """True iff SPRT status is ``FLAGGED``."""
+        return self.sprt_status == "FLAGGED"
 
 
 # SPRT parameters
@@ -74,11 +118,26 @@ def build_compliance_summary(
     Parameters:
         receipts:       List of Decision Receipts to analyse.
         chain_intact:   Whether the hash-chain verification passed.
-        verify_key_hex: Hex-encoded Ed25519 public key ID.
+        verify_key_hex: Hex-encoded Ed25519 public key ID. If left empty,
+                        the active KeyProvider is queried for the current
+                        verify key. Pass an explicit value for offline
+                        analysis or to pin a specific key version.
 
     Returns:
         ``ComplianceSummary`` with SPRT status and aggregated metrics.
     """
+    if not verify_key_hex:
+        # Lazy import + best-effort fetch from the active KeyProvider so the
+        # summary's verification_key_id is populated by default. Falls back
+        # silently if no provider is configured (e.g. offline analysis tools).
+        try:
+            from ai_audit.keys import _provider as _active_provider
+            from ai_audit.keys import get_verify_key_hex
+            if _active_provider is not None:
+                verify_key_hex = get_verify_key_hex()
+        except Exception:  # noqa: BLE001
+            verify_key_hex = ""
+
     summary = ComplianceSummary(
         total_receipts=len(receipts),
         chain_integrity=chain_intact,

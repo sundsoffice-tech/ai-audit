@@ -35,6 +35,13 @@ from ai_audit.config import AuditConfig
 logger = logging.getLogger(__name__)
 
 
+# Process-wide guard so we don't spam the ephemeral-key warning every time
+# a caller invokes init_audit_config() / reset_signing_key() during tests
+# or short-lived processes. Resets via reset_signing_key() so test isolation
+# remains intact.
+_ephemeral_warning_emitted = False
+
+
 # ---------------------------------------------------------------------------
 # KeyProvider ABC — NB 409cad95
 # ---------------------------------------------------------------------------
@@ -84,6 +91,7 @@ class DefaultKeyProvider(KeyProvider):
         self._lock = threading.Lock()
 
     def _load(self) -> nacl.signing.SigningKey:
+        global _ephemeral_warning_emitted  # noqa: PLW0603
         with self._lock:
             if self._key is None:
                 if self._config.signing_key_hex:
@@ -94,14 +102,17 @@ class DefaultKeyProvider(KeyProvider):
                         raise RuntimeError(
                             "No signing key set in production mode. "
                             "Provide AuditConfig(signing_key_hex=...) or a custom KeyProvider. "
-                            'Generate: python -c "import nacl.signing; '
-                            'print(nacl.signing.SigningKey.generate().encode().hex())"'
+                            "Generate one with: python -m ai_audit gen-key"
                         )
                     self._key = nacl.signing.SigningKey.generate()
-                    logger.warning(
-                        "No signing key configured — using ephemeral Ed25519 key. "
-                        "Set AuditConfig(signing_key_hex=...) for production use."
-                    )
+                    if not _ephemeral_warning_emitted:
+                        logger.warning(
+                            "No signing key configured — using ephemeral Ed25519 key. "
+                            "Set AuditConfig(signing_key_hex=...) for production use. "
+                            "Generate with: python -m ai_audit gen-key. "
+                            "(This warning is shown once per process.)"
+                        )
+                        _ephemeral_warning_emitted = True
             return self._key
 
     def get_signing_key(self) -> nacl.signing.SigningKey:
@@ -157,7 +168,13 @@ def get_verify_key_hex() -> str:
 
 
 def reset_signing_key() -> None:
-    """Reset all key state (for testing only)."""
-    global _provider, _config  # noqa: PLW0603
+    """Reset all key state (for testing only).
+
+    Also resets the once-per-process ephemeral-key warning guard so tests
+    that intentionally exercise the ephemeral path can re-observe the
+    warning without state leaking across test cases.
+    """
+    global _provider, _config, _ephemeral_warning_emitted  # noqa: PLW0603
     _provider = None
     _config = AuditConfig()
+    _ephemeral_warning_emitted = False
