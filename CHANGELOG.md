@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.4] - 2026-05-09
+## [0.4.5] - 2026-05-09
+
+### Fixed
+- `tests/test_basic.py::test_no_hacca_imports` now skips ANY module that
+  raises `ImportError` during walk-imports, not just modules under the
+  hard-coded optional-prefix whitelist (`integrations/`, `backends/`, `kms/`).
+  This was preventing v0.4.4's PyPI publish — `ai_audit.mcp_server` lives at
+  the top level of the package and requires the optional `mcp` extra, so
+  the [dev]-only CI environment couldn't import it. v0.4.4 was tagged on
+  GitHub but never reached PyPI for the same reason.
+
+### Note on v0.4.4
+v0.4.4 was tagged on GitHub but never reached PyPI due to the issue above.
+v0.4.5 ships the same feature set (MCP server + llms.txt) plus this fix.
+
+## [0.4.4] - 2026-05-09 — _GitHub-only, not on PyPI_
 
 ### Added — MCP server (`ai_audit.mcp_server`)
 Wraps the library as a stdio Model Context Protocol server so AI agents
