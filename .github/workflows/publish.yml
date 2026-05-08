@@ -5,8 +5,8 @@ on:
     types: [published]
 
 permissions:
-  contents: read
-  id-token: write  # Required for Trusted Publisher (OIDC)
+  contents: write          # SBOM is uploaded as a release asset
+  id-token: write          # Required for Trusted Publisher (OIDC)
 
 jobs:
   build:
@@ -20,16 +20,29 @@ jobs:
           python-version: "3.12"
 
       - name: Install build tools
-        run: pip install build
+        run: pip install build cyclonedx-bom
 
       - name: Build package
         run: python -m build
+
+      - name: Generate CycloneDX SBOM
+        run: |
+          # SBOM of the source tree (not just deps): includes our package
+          # plus its transitive runtime dependencies. JSON format for tooling.
+          cyclonedx-py environment --of JSON --output-file dist/sbom.cdx.json
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
+
+      - name: Attach SBOM to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            dist/sbom.cdx.json --clobber
 
   test:
     runs-on: ubuntu-latest
@@ -57,6 +70,11 @@ jobs:
         with:
           name: dist
           path: dist/
+
+      - name: Drop SBOM before PyPI upload
+        # PyPI rejects unknown file types; the SBOM is already attached to
+        # the GitHub Release and does not belong in the wheel/sdist upload.
+        run: rm -f dist/sbom.cdx.json
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
