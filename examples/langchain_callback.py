@@ -1,81 +1,46 @@
 #!/usr/bin/env python3
-"""LangChain callback handler integration for ai-audit-trail.
+"""LangChain integration moved to a real importable module in v0.4.0.
 
-Automatically creates audit receipts for every LLM call in a LangChain chain.
+Use::
 
-Usage::
-
+    from ai_audit.integrations.langchain import AuditCallbackHandler
     from langchain_openai import ChatOpenAI
-    from examples.langchain_callback import AuditCallbackHandler
 
-    handler = AuditCallbackHandler(tenant_id="acme")
+    handler = AuditCallbackHandler(store=store, tenant_id="acme")
     llm = ChatOpenAI(callbacks=[handler])
-    llm.invoke("What is 2+2?")
 
-Requires: pip install langchain-core
+This file is kept as a runnable smoke-test that exercises the handler
+without making any live API calls.
 """
 
 from __future__ import annotations
 
-EXAMPLE_CODE = '''
-import uuid
-from ai_audit import (
-    AuditConfig, ReceiptAction, ReceiptCollector, ReceiptStore,
-    init_audit_config,
-)
-from langchain_core.callbacks import BaseCallbackHandler
-from langchain_core.outputs import LLMResult
 
-init_audit_config(AuditConfig.from_env())
-store = ReceiptStore()
+def _smoketest() -> None:
+    from uuid import uuid4
 
-class AuditCallbackHandler(BaseCallbackHandler):
-    """LangChain callback that creates audit receipts for every LLM call."""
+    from langchain_core.outputs import Generation, LLMResult
 
-    def __init__(self, tenant_id: str = "default", session_id: str = ""):
-        self.tenant_id = tenant_id
-        self.session_id = session_id
-        self._collectors: dict[str, ReceiptCollector] = {}
+    from ai_audit import ReceiptStore
+    from ai_audit.integrations.langchain import AuditCallbackHandler
 
-    def on_llm_start(self, serialized, prompts, *, run_id, **kwargs):
-        collector = ReceiptCollector(
-            trace_id=str(run_id),
-            tenant_id=self.tenant_id,
-            session_id=self.session_id,
-        )
-        collector.set_input(prompts[0] if prompts else "")
-        collector._receipt.model_id = serialized.get("kwargs", {}).get("model_name", "unknown")
-        self._collectors[str(run_id)] = collector
+    store = ReceiptStore()
+    handler = AuditCallbackHandler(store=store, tenant_id="acme")
 
-    def on_llm_end(self, response: LLMResult, *, run_id, **kwargs):
-        collector = self._collectors.pop(str(run_id), None)
-        if collector is None:
-            return
-        text = response.generations[0][0].text if response.generations else ""
-        collector.set_output(text)
-        collector.set_action(ReceiptAction.ALLOW)
-        collector.emit(store)
-        collector.cleanup()
+    rid = uuid4()
+    handler.on_llm_start(
+        {"kwargs": {"model_name": "claude-opus-4-7"}},
+        ["What is 2+2?"],
+        run_id=rid,
+    )
+    handler.on_llm_end(LLMResult(generations=[[Generation(text="4")]]), run_id=rid)
 
-    def on_llm_error(self, error, *, run_id, **kwargs):
-        collector = self._collectors.pop(str(run_id), None)
-        if collector is None:
-            return
-        collector.set_output(str(error))
-        collector.set_action(ReceiptAction.FAIL_RETRY)
-        collector.emit(store)
-        collector.cleanup()
+    print(f"Receipts captured: {len(store.get_by_tenant('acme'))}")
+    r = store.get_by_tenant("acme")[0]
+    print(f"Model:  {r.model_id}")
+    print(f"Action: {r.action}")
+    print(f"Trace:  {r.trace_id}")
 
-
-# Usage:
-# from langchain_openai import ChatOpenAI
-# handler = AuditCallbackHandler(tenant_id="acme")
-# llm = ChatOpenAI(model="gpt-4", callbacks=[handler])
-# result = llm.invoke("What is the meaning of life?")
-# print(f"Audited {store.count} LLM calls")
-'''
 
 if __name__ == "__main__":
-    print("LangChain Audit Callback Handler Example")
-    print("=" * 40)
-    print(EXAMPLE_CODE)
+    _smoketest()

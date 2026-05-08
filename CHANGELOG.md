@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-08
+
+### Added — Drop-in Integrations
+- **`ai_audit.integrations.fastapi.AuditMiddleware`** — real Starlette/FastAPI
+  middleware (replaces the previous example-string), with path prefix filtering,
+  body capture, and PII config support.
+- **`ai_audit.integrations.langchain.AuditCallbackHandler`** — production
+  callback handler emitting one Receipt per LLM call (start / end / error).
+- **`ai_audit.integrations.openai`** — `AuditedOpenAI` proxy client and
+  `emit_chat_completion_receipt()` helper. Maps `finish_reason` to actions.
+- **`ai_audit.integrations.anthropic`** — `AuditedAnthropic` proxy client and
+  `emit_messages_receipt()` helper. Maps `stop_reason` to actions.
+
+### Added — Concrete Storage Backends
+- **`ai_audit.backends.postgres.PostgresColdBackend`** — JSONB-backed cold tier
+  with idempotent `ensure_schema()`, sync + async API (`a*` variants),
+  tenant-indexed queries.
+- **`ai_audit.backends.s3.S3ArchiveBackend`** — gzipped JSON archival to S3 (or
+  any S3-compatible store) with `s3://bucket/prefix/receipts/{tenant}/{yyyy-mm}/{id}.json.gz`
+  layout.
+
+### Added — KMS KeyProviders
+- **`ai_audit.kms.vault.VaultKeyProvider`** — Vault KV-v2 backed Ed25519 seed.
+- **`ai_audit.kms.aws.AWSKMSKeyProvider`** — KMS envelope decryption pattern.
+- **`ai_audit.kms.aws.AWSSecretsManagerKeyProvider`** — Secrets Manager pattern.
+
+### Added — CLI
+- `python -m ai_audit gen-key` — print a fresh hex-encoded Ed25519 seed (also
+  emits the public verify key for sharing). `-q/--quiet` for raw seed output.
+- `python -m ai_audit info` — print version + runtime info.
+
+### Added — Optional Dependency Groups (pyproject)
+- `[fastapi]`, `[langchain]`, `[openai]`, `[anthropic]`, `[postgres]`, `[s3]`,
+  `[vault]`, `[aws-kms]` — install only what you need. `[all]` adds everything.
+
+### Quality
+- 227/227 tests passing (+31 new), ruff clean, mypy strict 0 errors (37 modules).
+
 ## [0.3.1] - 2026-04-16
 
 ### Added

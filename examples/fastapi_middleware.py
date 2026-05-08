@@ -1,90 +1,40 @@
 #!/usr/bin/env python3
-"""FastAPI middleware integration for ai-audit-trail.
+"""FastAPI integration moved to a real importable module in v0.4.0.
 
-Wraps every AI endpoint with automatic receipt creation.
+Use::
 
-Usage::
+    from ai_audit.integrations.fastapi import AuditMiddleware
 
-    from fastapi import FastAPI
-    from examples.fastapi_middleware import AuditMiddleware
-
-    app = FastAPI()
-    app.add_middleware(AuditMiddleware, tenant_id="acme")
-
-Requires: pip install fastapi
+This file is kept only as a runnable smoke-test that constructs a
+Starlette test app with the middleware and emits one receipt.
 """
 
 from __future__ import annotations
 
-# --- This is an EXAMPLE file, not a runnable module ---
-# It shows the integration pattern without requiring fastapi as a dependency.
 
-EXAMPLE_CODE = '''
-import uuid
-from ai_audit import (
-    AuditConfig, ReceiptAction, ReceiptCollector, ReceiptStore,
-    init_audit_config,
-)
-from fastapi import FastAPI, Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
+def _smoketest() -> None:
+    from starlette.applications import Starlette
+    from starlette.responses import JSONResponse
+    from starlette.routing import Route
+    from starlette.testclient import TestClient
 
-# Initialize once at startup
-init_audit_config(AuditConfig.from_env())
-store = ReceiptStore()
+    from ai_audit import ReceiptStore
+    from ai_audit.integrations.fastapi import AuditMiddleware
 
-class AuditMiddleware(BaseHTTPMiddleware):
-    """Automatically creates audit receipts for AI endpoints."""
+    store = ReceiptStore()
 
-    def __init__(self, app, tenant_id: str = "default"):
-        super().__init__(app)
-        self.tenant_id = tenant_id
+    async def chat(request):  # type: ignore[no-untyped-def]
+        return JSONResponse({"answer": "42"})
 
-    async def dispatch(self, request: Request, call_next):
-        # Skip non-AI endpoints
-        if not request.url.path.startswith("/v1/ai/"):
-            return await call_next(request)
+    app = Starlette(routes=[Route("/v1/ai/chat", chat)])
+    app.add_middleware(AuditMiddleware, store=store, tenant_id="acme")
 
-        trace_id = request.headers.get("x-trace-id", uuid.uuid4().hex)
-        collector = ReceiptCollector(
-            trace_id=trace_id,
-            tenant_id=self.tenant_id,
-            session_id=request.headers.get("x-session-id", ""),
-        )
+    client = TestClient(app)
+    resp = client.get("/v1/ai/chat", headers={"x-trace-id": "demo-trace"})
+    print(f"HTTP {resp.status_code}")
+    print(f"Receipts captured: {len(store.get_by_tenant('acme'))}")
+    print(f"Trace ID propagated: {store.get_by_tenant('acme')[0].trace_id}")
 
-        # Capture input
-        body = await request.body()
-        collector.set_input(body.decode("utf-8", errors="replace"))
-
-        try:
-            response = await call_next(request)
-
-            # Capture output (simplified — real impl would read response body)
-            collector.set_output(f"status={response.status_code}")
-            collector.set_action(
-                ReceiptAction.ALLOW if response.status_code < 400
-                else ReceiptAction.REJECT
-            )
-        except Exception as e:
-            collector.set_output(str(e))
-            collector.set_action(ReceiptAction.FAIL_RETRY)
-            raise
-        finally:
-            collector.emit(store)
-            collector.cleanup()
-
-        return response
-
-
-# Usage:
-app = FastAPI()
-app.add_middleware(AuditMiddleware, tenant_id="acme")
-
-@app.post("/v1/ai/chat")
-async def chat(request: Request):
-    return {"message": "Hello! This request was audited."}
-'''
 
 if __name__ == "__main__":
-    print("FastAPI Audit Middleware Example")
-    print("=" * 40)
-    print(EXAMPLE_CODE)
+    _smoketest()
