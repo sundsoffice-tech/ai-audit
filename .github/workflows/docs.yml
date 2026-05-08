@@ -32,8 +32,19 @@ jobs:
       - name: Install mkdocs-material
         run: pip install "mkdocs-material>=9.5" "mkdocs>=1.6"
 
+      - name: Generate llms-full.txt from docs
+        run: python scripts/build_llms_full.py
+
       - name: Build site
         run: mkdocs build --strict
+
+      - name: Copy llms.txt files to site root verbatim
+        # mkdocs treats .txt as static and copies them, but we double-check
+        # the URL paths so / and /llms.txt and /llms-full.txt all resolve.
+        run: |
+          test -f site/llms.txt
+          test -f site/llms-full.txt
+          ls -la site/llms*.txt
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

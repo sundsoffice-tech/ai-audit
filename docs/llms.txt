@@ -1,0 +1,25 @@
+# ai-audit-trail
+
+> Cryptographically verifiable audit trails for AI systems. Ed25519-signed, SHA-256 hash-chained Decision Receipts with ISO 42001 / NIST AI RMF / EU AI Act compliance mappings. Pure-Python, MIT.
+
+ai-audit-trail produces tamper-evident audit records ("Decision Receipts") for every decision an AI system makes. Each receipt is signed with Ed25519 and linked into a per-tenant SHA-256 hash chain so any retroactive edit is detectable. Auditors verify evidence packages offline without runtime access. Drop-in adapters exist for FastAPI, LangChain, the OpenAI SDK, and the Anthropic SDK; KMS providers exist for HashiCorp Vault, AWS KMS, and AWS Secrets Manager.
+
+## Docs
+
+- [Home](https://sundsoffice-tech.github.io/ai-audit-trail/index.md): Project overview, who it is for, shared responsibility model.
+- [Quickstart](https://sundsoffice-tech.github.io/ai-audit-trail/quickstart.md): Install, generate a key, create a receipt, verify a chain — in 10 lines of Python.
+- [Concepts](https://sundsoffice-tech.github.io/ai-audit-trail/concepts.md): DecisionReceipt schema, hash-chain semantics, RFC 6962 Merkle batch sealing, Ed25519 signing, TOCTOU safety, evidence-package format.
+- [Integrations](https://sundsoffice-tech.github.io/ai-audit-trail/integrations.md): FastAPI middleware, LangChain callback, AuditedOpenAI / AuditedAnthropic proxy clients with finish_reason / stop_reason action mapping.
+- [Compliance](https://sundsoffice-tech.github.io/ai-audit-trail/compliance.md): ISO/IEC 42001 controls (A.5.3, A.6.2.6, A.6.2.8, A.7.5, A.8.4), NIST AI RMF function-level mapping (GOVERN/MAP/MEASURE/MANAGE), EU AI Act articles 9, 12, 13, 17, 18, plus what the library is *not*.
+- [CLI](https://sundsoffice-tech.github.io/ai-audit-trail/cli.md): `ai-audit gen-key`, `ai-audit verify <bundle.zip>`, `ai-audit info`.
+
+## Source and packaging
+
+- [GitHub repository](https://github.com/sundsoffice-tech/ai-audit-trail): Source, issues, discussions, releases.
+- [PyPI package](https://pypi.org/project/ai-audit-trail/): `pip install ai-audit-trail`. Optional extras: `[fastapi]`, `[langchain]`, `[openai]`, `[anthropic]`, `[postgres]`, `[s3]`, `[vault]`, `[aws-kms]`, `[all]`.
+- [CHANGELOG](https://github.com/sundsoffice-tech/ai-audit-trail/blob/main/CHANGELOG.md): Version history.
+- [SECURITY](https://github.com/sundsoffice-tech/ai-audit-trail/blob/main/SECURITY.md): Threat model, key rotation, vulnerability disclosure.
+
+## Optional
+
+- [CITATION.cff](https://github.com/sundsoffice-tech/ai-audit-trail/blob/main/CITATION.cff): Citation File Format, for academic and audit-evidence references.

@@ -66,4 +66,10 @@ extra:
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/ai-audit-trail/
 
+# Ship llms.txt and llms-full.txt verbatim at the docs root so LLM tools
+# (Cursor @docs, Context7, Anthropic Skills) can ingest them directly.
+not_in_nav: |
+  llms.txt
+  llms-full.txt
+
 copyright: MIT licensed. &copy; 2026 S&amp;S Connect.
